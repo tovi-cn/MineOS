@@ -1,5 +1,5 @@
 
--- Checking for required components
+-- 检查所需组件
 local function getComponentAddress(name)
 	return component.list(name)() or error("Required " .. name .. " component is missing")
 end
@@ -9,7 +9,7 @@ local EEPROMAddress, internetAddress, GPUAddress =
 	getComponentAddress("internet"),
 	getComponentAddress("gpu")
 
--- Binding GPU to screen in case it's not done yet
+-- 将 GPU 绑定到屏幕以防尚未完成
 component.invoke(GPUAddress, "bind", getComponentAddress("screen"))
 local screenWidth, screenHeight = component.invoke(GPUAddress, "getResolution")
 
@@ -25,7 +25,7 @@ local temporaryFilesystemProxy, selectedFilesystemProxy
 
 --------------------------------------------------------------------------------
 
--- Working with components directly before system libraries are downloaded & initialized
+-- 在下载和初始化系统库之前直接使用组件
 local function centrize(width)
 	return math.floor(screenWidth / 2 - width / 2)
 end
@@ -136,11 +136,11 @@ local function deserialize(text)
 	end
 end
 
--- Clearing screen
+-- 清屏
 component.invoke(GPUAddress, "setBackground", 0xE1E1E1)
 component.invoke(GPUAddress, "fill", 1, 1, screenWidth, screenHeight, " ")
 
--- Searching for appropriate temporary filesystem for storing libraries, images, etc
+-- 搜索合适的临时文件系统来存储库、图像等
 for address in component.list("filesystem") do
 	local proxy = component.proxy(address)
 	if proxy.spaceTotal() >= 2 * 1024 * 1024 then
@@ -149,23 +149,23 @@ for address in component.list("filesystem") do
 	end
 end
 
--- If there's no suitable HDDs found - then meow
+-- 如果没有找到合适的硬盘 - 然后喵
 if not temporaryFilesystemProxy then
 	status("No appropriate filesystem found", true)
 	return
 end
 
--- First, we need a big ass file list with localizations, applications, wallpapers
+-- 首先，我们需要一个包含本地化、应用程序、壁纸的大文件列表
 progress(0)
 local files = deserialize(request(installerURL .. "Files.cfg"))
 
--- After that we could download required libraries for installer from it
+-- 之后我们可以从中下载安装程序所需的库
 for i = 1, #files.installerFiles do
 	progress(i / #files.installerFiles)
 	download(files.installerFiles[i], installerPath .. files.installerFiles[i])
 end
 
--- Initializing simple package system for loading system libraries
+-- 初始化用于加载系统库的简单包系统
 package = {loading = {}, loaded = {}}
 
 function require(module)
@@ -202,7 +202,7 @@ function require(module)
 	end
 end
 
--- Initializing system libraries
+-- 初始化系统库
 local filesystem = require("Filesystem")
 filesystem.setProxy(temporaryFilesystemProxy)
 
@@ -220,16 +220,16 @@ local paths = require("Paths")
 
 --------------------------------------------------------------------------------
 
--- Creating main UI workspace
+-- 创建主 UI 工作区
 local workspace = GUI.workspace()
 workspace:addChild(GUI.panel(1, 1, workspace.width, workspace.height, 0x1E1E1E))
 
--- Main installer window
+-- 主安装程序窗口
 local window = workspace:addChild(GUI.window(1, 1, 80, 24))
 window.localX, window.localY = math.ceil(workspace.width / 2 - window.width / 2), math.ceil(workspace.height / 2 - window.height / 2)
 window:addChild(GUI.panel(1, 1, window.width, window.height, 0xE1E1E1))
 
--- Top menu
+-- 顶部菜单
 local menu = workspace:addChild(GUI.menu(1, 1, workspace.width, 0xF0F0F0, 0x787878, 0x3366CC, 0xE1E1E1))
 local installerMenu = menu:addContextMenuItem("MineOS", 0x2D2D2D)
 installerMenu:addItem("Shutdown").onTouch = function()
@@ -243,7 +243,7 @@ installerMenu:addItem("Exit").onTouch = function()
 	workspace:stop()
 end
 
--- Main vertical layout
+-- 主要垂直布局
 local layout = window:addChild(GUI.layout(1, 1, window.width, window.height - 2, 1, 1))
 
 local stageButtonsLayout = window:addChild(GUI.layout(1, window.height - 1, window.width, 1, 1, 1))
@@ -308,10 +308,10 @@ local acceptSwitchAndLabel = newSwitchAndLabel(30, 0x9949FF, "", false)
 local localizationComboBox = GUI.comboBox(1, 1, 22, 1, 0xF0F0F0, 0x969696, 0xD2D2D2, 0xB4B4B4)
 for i = 1, #files.localizations do
 	localizationComboBox:addItem(filesystemHideExtension(filesystemName(files.localizations[i]))).onTouch = function()
-		-- Obtaining localization table
+		-- 获取定位表
 		localization = deserialize(request(installerURL .. files.localizations[i]))
 
-		-- Filling widgets with selected localization data
+		-- 用选定的本地化数据填充小部件
 		usernameInput.placeholderText = localization.username
 		passwordInput.placeholderText = localization.password
 		passwordSubmitInput.placeholderText = localization.submitPassword
@@ -397,7 +397,7 @@ end
 passwordInput.onInputFinished = usernameInput.onInputFinished
 passwordSubmitInput.onInputFinished = usernameInput.onInputFinished
 
--- Localization selection stage
+-- 本地化选择阶段
 addStage(function()
 	prevButton.disabled = true
 
@@ -408,7 +408,7 @@ addStage(function()
 	localizationComboBox:getItem(1).onTouch()
 end)
 
--- Filesystem selection stage
+-- 文件系统选择阶段
 addStage(function()
 	prevButton.disabled = false
 	nextButton.disabled = false
@@ -488,7 +488,7 @@ addStage(function()
 	updateDisks()
 end)
 
--- User profile setup stage
+-- 用户配置文件设置阶段
 addStage(function()
 	checkUserInputs()
 
@@ -502,7 +502,7 @@ addStage(function()
 	layout:addChild(passwordSwitchAndLabel)
 end)
 
--- Downloads customization stage
+-- 下载定制阶段
 addStage(function()
 	nextButton.disabled = false
 
@@ -515,7 +515,7 @@ addStage(function()
 	layout:addChild(localizationsSwitchAndLabel)
 end)
 
--- License acception stage
+-- 许可接受阶段
 addStage(function()
 	checkLicense()
 
@@ -525,17 +525,17 @@ addStage(function()
 	layout:addChild(acceptSwitchAndLabel)
 end)
 
--- Downloading stage
+-- 下载阶段
 addStage(function()
 	stageButtonsLayout:removeChildren()
 	
-	-- Creating user profile
+	-- 创建用户配置文件
 	layout:removeChildren()
 	addImage(1, 1, "User")
 	addTitle(0x969696, localization.creating)
 	workspace:draw()
 
-	-- Renaming if possible
+	-- 如果可能重命名
 	if not selectedFilesystemProxy.getLabel() then
 		selectedFilesystemProxy.setLabel("MineOS HDD")
 	end
@@ -546,7 +546,7 @@ addStage(function()
 		filesystem.setProxy(temporaryFilesystemProxy)
 	end
 
-	-- Creating system paths
+	-- 创建系统路径
 	local userSettings, userPaths
 	switchProxy(function()
 		paths.create(paths.system)
@@ -559,7 +559,7 @@ addStage(function()
 		)
 	end)
 
-	-- Flashing EEPROM
+	-- 闪烁的 EEPROM
 	layout:removeChildren()
 	addImage(1, 1, "EEPROM")
 	addTitle(0x969696, localization.flashing)
@@ -569,7 +569,7 @@ addStage(function()
 	component.invoke(EEPROMAddress, "setLabel", "MineOS EFI")
 	component.invoke(EEPROMAddress, "setData", selectedFilesystemProxy.address)
 
-	-- Downloading files
+	-- 下载文件
 	layout:removeChildren()
 	addImage(3, 2, "Downloading")
 
@@ -577,7 +577,7 @@ addStage(function()
 	local progressBar = container:addChild(GUI.progressBar(1, 1, container.width, 0x66B6FF, 0xD2D2D2, 0xA5A5A5, 0, true, false))
 	local cyka = container:addChild(GUI.label(1, 2, container.width, 1, 0x969696, "")):setAlignment(GUI.ALIGNMENT_HORIZONTAL_CENTER, GUI.ALIGNMENT_VERTICAL_TOP)
 
-	-- Creating final filelist of things to download
+	-- 创建要下载的内容的最终文件列表
 	local downloadList = {}
 
 	local function getData(item)
@@ -599,11 +599,11 @@ addStage(function()
 					localizationName = filesystem.hideExtension(filesystem.name(path))
 
 					if
-						-- If ALL loacalizations need to be downloaded
+						-- 如果需要下载所有本地化
 						localizationsSwitchAndLabel.switch.state or
-						-- If it's required localization file
+						-- 如果需要本地化文件
 						localizationName == selectedLocalization or
-						-- Downloading English "just in case" for non-english localizations
+						-- 为非英语本地化下载英语“以防万一”
 						selectedLocalization ~= "English" and localizationName == "English"
 					then
 						table.insert(downloadList, files[key][i])
@@ -621,7 +621,7 @@ addStage(function()
 	addToList(wallpapersSwitchAndLabel.switch.state, "wallpapers")
 	addToList(screensaversSwitchAndLabel.switch.state, "screensavers")
 
-	-- Downloading files from created list
+	-- 从创建的列表中下载文件
 	local versions, path, id, version, shortcut = {}
 	for i = 1, #downloadList do
 		path, id, version, shortcut = getData(downloadList[i])
@@ -629,10 +629,10 @@ addStage(function()
 		cyka.text = text.limit(localization.installing .. " \"" .. path .. "\"", container.width, "center")
 		workspace:draw()
 
-		-- Download file
+		-- 下载文件
 		download(path, OSPath .. path)
 
-		-- Adding system versions data
+		-- 添加系统版本数据
 		if id then
 			versions[id] = {
 				path = OSPath .. path,
@@ -640,7 +640,7 @@ addStage(function()
 			}
 		end
 
-		-- Create shortcut if possible
+		-- 如果可能，创建快捷方式
 		if shortcut then
 			switchProxy(function()
 				system.createShortcut(
@@ -654,12 +654,12 @@ addStage(function()
 		workspace:draw()
 	end
 
-	-- Saving system versions
+	-- 保存系统版本
 	switchProxy(function()
 		filesystem.writeTable(paths.system.versions, versions, true)
 	end)
 
-	-- Done info
+	-- 完成信息
 	layout:removeChildren()
 	addImage(1, 1, "Done")
 	addTitle(0x969696, localization.installed)
@@ -668,7 +668,7 @@ addStage(function()
 	end
 	workspace:draw()
 
-	-- Removing temporary installer directory
+	-- 删除临时安装程序目录
 	temporaryFilesystemProxy.remove(installerPath)
 end)
 

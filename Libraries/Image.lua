@@ -142,16 +142,16 @@ local function saveOCIF678(file, picture, is7, is8)
 		return size
 	end
 	
-	-- Grouping picture by it's alphas, symbols and colors
+	-- 按 alpha、符号和颜色对图片进行分组
 	local groupedPicture = group(picture, true)
 
-	-- Writing 1 byte per image width and height
+	-- 每个图像宽度和高度写入 1 个字节
 	file:writeBytes(
 		picture[1] - is8,
 		picture[2] - is8
 	)
 
-	-- Writing 1 byte for alphas array size
+	-- 为 alphas 数组大小写入 1 个字节
 	file:writeBytes(getGroupSize(groupedPicture))
 
 	local symbolsSize
@@ -160,45 +160,45 @@ local function saveOCIF678(file, picture, is7, is8)
 		symbolsSize = getGroupSize(groupedPicture[alpha])
 
 		file:writeBytes(
-			-- Writing 1 byte for current alpha value
+			-- 为当前 alpha 值写入 1 个字节
 			math.floor(alpha * 255),
-			-- Writing 2 bytes for symbols array size
+			-- 为符号数组大小写入 2 个字节
 			bit32.rshift(symbolsSize, 8),
 			bit32.band(symbolsSize, 0xFF)
 		)
 
 		for symbol in pairs(groupedPicture[alpha]) do
-			-- Writing current unicode symbol value
+			-- 写入当前 unicode 符号值
 			file:write(symbol)
-			-- Writing 1 byte for backgrounds array size
+			-- 为背景数组大小写入 1 个字节
 			file:writeBytes(getGroupSize(groupedPicture[alpha][symbol]))
 
 			for background in pairs(groupedPicture[alpha][symbol]) do
 				file:writeBytes(
-					-- Writing 1 byte for background color value (compressed by color)
+					-- 为背景颜色值写入 1 个字节（按颜色压缩）
 					background,
-					-- Writing 1 byte for foregrounds array size
+					-- 为前景数组大小写入 1 个字节
 					getGroupSize(groupedPicture[alpha][symbol][background])
 				)
 
 				for foreground in pairs(groupedPicture[alpha][symbol][background]) do
 					file:writeBytes(
-						-- Writing 1 byte for foreground color value (compressed by color)
+						-- 为前景颜色值写入 1 个字节（按颜色压缩）
 						foreground,
-						-- Writing 1 byte for y array size
+						-- 为 y 数组大小写入 1 个字节
 						getGroupSize(groupedPicture[alpha][symbol][background][foreground])
 					)
 					
 					for y in pairs(groupedPicture[alpha][symbol][background][foreground]) do
 						file:writeBytes(
-							-- Writing 1 byte for current y value
+							-- 为当前 y 值写入 1 个字节
 							y - is8,
-							-- Writing 1 byte for x array size
+							-- 为 x 数组大小写入 1 个字节
 							#groupedPicture[alpha][symbol][background][foreground][y] - is7
 						)
 
 						for x = 1, #groupedPicture[alpha][symbol][background][foreground][y] do
-							-- Wrting 1 byte for current x value
+							-- 为当前 x 值写入 1 个字节
 							file:writeBytes(groupedPicture[alpha][symbol][background][foreground][y][x] - is8)
 						end
 					end
